@@ -13,11 +13,15 @@ export const FEATURE_KEY = 'shared-books';
 /**
  * State Shape
  **/
-export interface State {}
+export interface AppState {
+  books: fromBooks.FeatureState;
+}
 
-export const reducers: ActionReducerMap<State> = {};
+export const reducers: ActionReducerMap<AppState> = {
+  books: fromBooks.reducer,
+};
 
-export const metaReducers: MetaReducer<State>[] = [];
+export const metaReducers: MetaReducer<AppState>[] = [];
 
 /**
  * Module
@@ -30,8 +34,31 @@ export class SharedStateBooksModule {}
 /**
  * Feature Selector
  **/
-export const selectSharedBooksState = createFeatureSelector<State>(FEATURE_KEY);
+export const selectSharedBooksState = createFeatureSelector<AppState>(FEATURE_KEY);
 
 /**
  * Books Selectors
  */
+export const selectBooksState = createSelector(
+  selectSharedBooksState,
+  (sharedBooksFeatureState: AppState) => sharedBooksFeatureState.books,
+);
+
+export const selectAllBooks = createSelector(selectBooksState, fromBooks.selectAll);
+
+export const selectActiveBook = createSelector(selectBooksState, fromBooks.selectActiveBook);
+
+export const selectBooksEarningsTotals = createSelector(
+  selectBooksState,
+  fromBooks.selectEarningsTotals,
+);
+
+// function debug(reducer: ActionReducer<AppState>): ActionReducer<AppState> {
+//   return (state, action) => {
+//     console.log('state', state);
+//     console.log('action', action);
+//     console.log('---------------');
+
+//     return reducer(state, action);
+//   };
+// }

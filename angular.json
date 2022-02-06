@@ -97,6 +97,7 @@
               "browserTarget": "earnings:build:production"
             },
             "development": {
+              "port": 4201,
               "browserTarget": "earnings:build:development"
             }
           },

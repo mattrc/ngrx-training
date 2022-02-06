@@ -1,12 +1,87 @@
-import { createReducer, on, Action, createSelector } from '@ngrx/store';
-import { createEntityAdapter, EntityState } from '@ngrx/entity';
+import { BooksApiActions, BooksPageActions } from '@book-co/books-page/actions';
 import { BookModel, calculateBooksGrossEarnings } from '@book-co/shared-models';
-import { BooksPageActions, BooksApiActions } from '@book-co/books-page/actions';
+import { createReducer, createSelector, on } from '@ngrx/store';
 
-const createBook = (books: BookModel[], book: BookModel) => [...books, book];
-const updateBook = (books: BookModel[], changes: BookModel) =>
-  books.map((book) => {
-    return book.id === changes.id ? Object.assign({}, book, changes) : book;
-  });
-const deleteBook = (books: BookModel[], bookId: string) =>
-  books.filter((book) => bookId !== book.id);
+export interface FeatureState {
+  collection: BookModel[];
+  activeBookId: string | null;
+}
+
+const initialState: FeatureState = {
+  collection: [],
+  activeBookId: null,
+};
+
+// Reducer
+export const reducer = createReducer(
+  initialState,
+  on(
+    BooksPageActions.load, //
+    BooksPageActions.clearBook,
+    (state: FeatureState) => {
+      return {
+        ...state,
+        activeBookId: null,
+      };
+    },
+  ),
+  on(BooksPageActions.selectBook, (state: FeatureState, action: any) => {
+    return {
+      ...state,
+      activeBookId: action.book.id,
+    };
+  }),
+  on(BooksApiActions.loaded, (state: FeatureState, action: any) => {
+    return {
+      ...state,
+      collection: action.books,
+    };
+  }),
+  on(BooksApiActions.created, (state: FeatureState, action: any) => {
+    return {
+      ...state,
+      collection: [...state.collection, action.book],
+    };
+  }),
+  on(BooksApiActions.updated, (state: FeatureState, action: any) => {
+    return {
+      ...state,
+      activeBookId: null,
+      collection: state.collection.map(item => {
+        if (item.id === action.book.id) {
+          return action.book;
+        }
+
+        return item;
+      }),
+    };
+  }),
+  on(BooksApiActions.deleted, (state: FeatureState, action: any) => {
+    return {
+      ...state,
+      collection: state.collection.filter(book => book.id !== action.id),
+    };
+  }),
+);
+
+// Selectors
+export function selectAll(state: FeatureState) {
+  return state.collection;
+}
+
+export function selectActiveBookId(state: FeatureState) {
+  return state.activeBookId;
+}
+
+export const selectActiveBook = createSelector(
+  selectAll,
+  selectActiveBookId,
+  (books: BookModel[], activeBookId: string | null) => {
+    return books.find(book => book.id === activeBookId) ?? null;
+  },
+);
+
+export const selectEarningsTotals = createSelector(
+  selectAll, //
+  calculateBooksGrossEarnings,
+);
